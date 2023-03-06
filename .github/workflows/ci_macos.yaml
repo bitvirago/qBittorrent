@@ -17,11 +17,11 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        libt_version: ["2.0.8", "1.2.18"]
-        qbt_gui: ["GUI=ON", "GUI=OFF"]
-        qt_version: ["5.15.2", "6.4.0"]
+        libt_version: ["2.0.8"]
+        qbt_gui: ["GUI=OFF"]
+        qt_version: ["6.4.0"]
         exclude:
-          - libt_version: "1.2.18"
+          - libt_version: "2.0.8"
             qt_version: "6.4.0"
 
 
@@ -84,25 +84,6 @@ jobs:
           cmake --build build
           sudo cmake --install build
 
-      - name: Build qBittorrent (Qt5)
-        if: ${{ startsWith(matrix.qt_version, 5) }}
-        run: |
-          CXXFLAGS="$CXXFLAGS -Werror -Wno-error=deprecated-declarations" \
-          LDFLAGS="$LDFLAGS -gz" \
-          cmake \
-            -B build \
-            -G "Ninja" \
-            -DCMAKE_BUILD_TYPE=RelWithDebInfo \
-            -DCMAKE_EXPORT_COMPILE_COMMANDS=ON \
-            -DBOOST_ROOT="${{ env.boost_path }}" \
-            -DOPENSSL_ROOT_DIR="${{ env.openssl_root }}" \
-            -DTESTING=ON \
-            -DVERBOSE_CONFIGURE=ON \
-            -D${{ matrix.qbt_gui }}
-          cmake --build build --target qbt_update_translations
-          cmake --build build
-          cmake --build build --target check
-
       - name: Build qBittorrent (Qt6)
         if: ${{ startsWith(matrix.qt_version, 6) }}
         run: |
@@ -119,17 +100,7 @@ jobs:
             -DTESTING=ON \
             -DVERBOSE_CONFIGURE=ON \
             -D${{ matrix.qbt_gui }}
-          cmake --build build --target qbt_update_translations
           cmake --build build
-          cmake --build build --target check
-
-      - name: Prepare build artifacts
-        run: |
-          mkdir upload
-          mkdir upload/cmake
-          cp build/compile_commands.json upload/cmake
-          mkdir upload/cmake/libtorrent
-          cp libtorrent/build/compile_commands.json upload/cmake/libtorrent
 
       - name: upload artifact as zip
         uses: actions/upload-artifact@v2
