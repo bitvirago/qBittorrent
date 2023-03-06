@@ -24,6 +24,7 @@ jobs:
           - libt_version: "1.2.18"
             qt_version: "6.4.0"
 
+
     env:
       boost_path: "${{ github.workspace }}/../boost"
       openssl_root: /usr/local/opt/openssl@1.1
