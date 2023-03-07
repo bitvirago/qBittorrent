@@ -95,7 +95,7 @@ jobs:
                     -D CMAKE_OSX_ARCHITECTURES=arm64 \
                     -D CMAKE_BUILD_TYPE=Release
                     -D${{ matrix.qbt_gui }}
-                cmake --build build-qbittorrent -j$(sysctl -n hw.ncpu)
+                  cmake --build build-qbittorrent -j$(sysctl -n hw.ncpu)
 
             - name: Prepare build artifacts
               run: |
