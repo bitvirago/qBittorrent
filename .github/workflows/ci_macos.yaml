@@ -14,23 +14,26 @@ jobs:
     name: Build
     runs-on: macos-latest
 
-    strategy:
-      fail-fast: false
-      matrix:
-        libt_version: ["2.0.8"]
+strategy:
+    fail-fast: false
+    matrix:
+        libt_version: ["2.0.8", "1.2.18"]
         qbt_gui: ["GUI=OFF"]
+        qt_version: ["5.15.2", "6.4.0"]
+        exclude:
+            - libt_version: "1.2.18"
+              qt_version: "6.4.0"
 
+env:
+    boost_path: "${{ github.workspace }}/../boost"
+    openssl_root: /usr/local/opt/openssl@1.1
 
-    env:
-      boost_path: "${{ github.workspace }}/../boost"
-      openssl_root: /usr/local/opt/openssl@1.1
+steps:
+    - name: Checkout repository
+      uses: actions/checkout@v3
 
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v3
-
-      - name: Install dependencies
-        run: |
+    - name: Install dependencies
+      run: |
           export \
             HOMEBREW_NO_INSTALLED_DEPENDENTS_CHECK=1 \
             HOMEBREW_NO_INSTALL_CLEANUP=1
@@ -39,13 +42,13 @@ jobs:
             cmake ninja \
             openssl@1.1 zlib
 
-      - name: Setup ccache
-        uses: Chocobo1/setup-ccache-action@v1
-        with:
+    - name: Setup ccache
+      uses: Chocobo1/setup-ccache-action@v1
+      with:
           update_packager_index: false
 
-      - name: Install boost
-        run: |
+    - name: Install boost
+      run: |
           curl \
             -L \
             -o "${{ runner.temp }}/boost.tar.bz2" \
@@ -53,15 +56,15 @@ jobs:
           tar -xf "${{ runner.temp }}/boost.tar.bz2" -C "${{ github.workspace }}/.."
           mv "${{ github.workspace }}/.."/boost_* "${{ env.boost_path }}"
 
-      - name: Install Qt
-        uses: jurplel/install-qt-action@v3
-        with:
-          version:  6.4.0
+    - name: Install Qt
+      uses: jurplel/install-qt-action@v3
+      with:
+          version: ${{ matrix.qt_version }}
           archives: qtbase qtdeclarative qtsvg qttools
           # Not sure why Qt made a hard dependency on qtdeclarative, try removing it when Qt > 6.4.0
 
-      - name: Install libtorrent
-        run: |
+    - name: Install libtorrent
+      run: |
           git clone \
             --branch v${{ matrix.libt_version }} \
             --depth 1 \
@@ -80,8 +83,28 @@ jobs:
           cmake --build build
           sudo cmake --install build
 
-      - name: Build qBittorrent (Qt6)
-        run: |
+    - name: Build qBittorrent (Qt5)
+      if: ${{ startsWith(matrix.qt_version, 5) }}
+      run: |
+          CXXFLAGS="$CXXFLAGS -Werror -Wno-error=deprecated-declarations" \
+          LDFLAGS="$LDFLAGS -gz" \
+          cmake \
+            -B build \
+            -G "Ninja" \
+            -DCMAKE_BUILD_TYPE=RelWithDebInfo \
+            -DCMAKE_EXPORT_COMPILE_COMMANDS=ON \
+            -DBOOST_ROOT="${{ env.boost_path }}" \
+            -DOPENSSL_ROOT_DIR="${{ env.openssl_root }}" \
+            -DTESTING=ON \
+            -DVERBOSE_CONFIGURE=ON \
+            -D${{ matrix.qbt_gui }}
+          cmake --build build --target qbt_update_translations
+          cmake --build build
+          cmake --build build --target check
+
+    - name: Build qBittorrent (Qt6)
+      if: ${{ startsWith(matrix.qt_version, 6) }}
+      run: |
           CXXFLAGS="$CXXFLAGS -Wno-gnu-zero-variadic-macro-arguments -Werror -Wno-error=deprecated-declarations" \
           LDFLAGS="$LDFLAGS -gz" \
           cmake \
@@ -89,23 +112,26 @@ jobs:
             -G "Ninja" \
             -DCMAKE_BUILD_TYPE=RelWithDebInfo \
             -DCMAKE_EXPORT_COMPILE_COMMANDS=ON \
-            -DCMAKE_CXX_STANDARD=17 \
-            -DCMAKE_OSX_ARCHITECTURES=arm64 \
-            -DCMAKE_OSX_DEPLOYMENT_TARGET=13.2 \
             -DBOOST_ROOT="${{ env.boost_path }}" \
             -DOPENSSL_ROOT_DIR="${{ env.openssl_root }}" \
             -DQT6=ON \
             -DTESTING=ON \
             -DVERBOSE_CONFIGURE=ON \
             -D${{ matrix.qbt_gui }}
+          cmake --build build --target qbt_update_translations
           cmake --build build
+          cmake --build build --target check
 
-      - name: upload artifact as zip
-        uses: actions/upload-artifact@v2
-        with:
-            name: qBittorrent-CI_macOS_${{ matrix.qbt_gui }}
-            path: |
-                build/compile_commands.json
-                build/target_graph.dot
-                build/qbittorrent.app
-                build/qbittorrent-nox.app
+    - name: Prepare build artifacts
+      run: |
+          mkdir upload
+          mkdir upload/cmake
+          cp build/compile_commands.json upload/cmake
+          mkdir upload/cmake/libtorrent
+          cp libtorrent/build/compile_commands.json upload/cmake/libtorrent
+
+    - name: Upload build artifacts
+      uses: actions/upload-artifact@v3
+      with:
+          name: build-info_macOS_${{ matrix.qbt_gui }}_libtorrent-${{ matrix.libt_version }}_Qt-${{ matrix.qt_version }}
+          path: build
