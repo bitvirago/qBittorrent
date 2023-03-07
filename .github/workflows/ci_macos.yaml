@@ -14,16 +14,6 @@ jobs:
         name: Build
         runs-on: macos-latest
 
-        strategy:
-            fail-fast: false
-            matrix:
-                libt_version: ["2.0.8", "1.2.18"]
-                qbt_gui: ["GUI=OFF"]
-                qt_version: ["6.4.0"]
-                exclude:
-                    - libt_version: "1.2.18"
-                      qt_version: "6.4.0"
-
         env:
             boost_path: "${{ github.workspace }}/../boost"
             openssl_root: /usr/local/opt/openssl@1.1
@@ -59,14 +49,14 @@ jobs:
             - name: Install Qt
               uses: jurplel/install-qt-action@v3
               with:
-                  version: ${{ matrix.qt_version }}
+                  version: 6.4.0
                   archives: qtbase qtdeclarative qtsvg qttools
                   # Not sure why Qt made a hard dependency on qtdeclarative, try removing it when Qt > 6.4.0
 
             - name: Install libtorrent
               run: |
                   git clone \
-                    --branch v${{ matrix.libt_version }} \
+                    --branch v2.0.8 \
                     --depth 1 \
                     --recurse-submodules \
                     https://github.com/arvidn/libtorrent.git
@@ -94,7 +84,7 @@ jobs:
                     -D CMAKE_CXX_VISIBILITY_PRESET=hidden -D CMAKE_VISIBILITY_INLINES_HIDDEN=ON \
                     -D CMAKE_OSX_ARCHITECTURES=arm64 \
                     -D CMAKE_BUILD_TYPE=Release
-                    -D${{ matrix.qbt_gui }}
+                    -DGUI=OFF
                   cmake --build build-qbittorrent -j$(sysctl -n hw.ncpu)
 
             - name: Prepare build artifacts
@@ -105,5 +95,5 @@ jobs:
             - name: Upload build artifacts
               uses: actions/upload-artifact@v3
               with:
-                  name: build-info_macOS_${{ matrix.qbt_gui }}_libtorrent-${{ matrix.libt_version }}_Qt-${{ matrix.qt_version }}
+                  name: build-info_macOS_GUI=OFF_libtorrent_Qt-6.4.0
                   path: upload
