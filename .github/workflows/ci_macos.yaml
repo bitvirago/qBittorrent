@@ -82,8 +82,6 @@ jobs:
                     -DOPENSSL_ROOT_DIR="${{ env.openssl_root }}"
                   cmake --build build
                   sudo cmake --install build
-
-
             - name: Build qBittorrent (Qt6)
               if: ${{ startsWith(matrix.qt_version, 6) }}
               run: |
