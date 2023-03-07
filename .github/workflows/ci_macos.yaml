@@ -19,7 +19,7 @@ jobs:
             matrix:
                 libt_version: ["2.0.8", "1.2.18"]
                 qbt_gui: ["GUI=OFF"]
-                qt_version: ["5.15.2", "6.4.0"]
+                qt_version: ["6.4.0"]
                 exclude:
                     - libt_version: "1.2.18"
                       qt_version: "6.4.0"
@@ -83,36 +83,20 @@ jobs:
                   cmake --build build
                   sudo cmake --install build
 
-            - name: Build qBittorrent (Qt5)
-              if: ${{ startsWith(matrix.qt_version, 5) }}
-              run: |
-                  cmake \
-                    -B build \
-                    -G "Ninja" \
-                    -DCMAKE_BUILD_TYPE=Release \
-                    -DCMAKE_EXPORT_COMPILE_COMMANDS=ON \
-                    -DBOOST_ROOT="${{ env.boost_path }}" \
-                    -DOPENSSL_ROOT_DIR="${{ env.openssl_root }}" \
-                    -DTESTING=ON \
-                    -DVERBOSE_CONFIGURE=ON \
-                    -D${{ matrix.qbt_gui }}
-                    cmake --build build -j$(sysctl -n hw.ncpu)
-
             - name: Build qBittorrent (Qt6)
               if: ${{ startsWith(matrix.qt_version, 6) }}
               run: |
                   cmake \
                     -B build \
-                    -G "Ninja" \
-                    -DCMAKE_BUILD_TYPE=Release \
-                    -DCMAKE_EXPORT_COMPILE_COMMANDS=ON \
+                    -D CMAKE_VERBOSE_MAKEFILE=ON \
                     -DBOOST_ROOT="${{ env.boost_path }}" \
                     -DOPENSSL_ROOT_DIR="${{ env.openssl_root }}" \
-                    -DQT6=ON \
-                    -DTESTING=ON \
-                    -DVERBOSE_CONFIGURE=ON \
+                    -D CMAKE_CXX_STANDARD=17 -D CMAKE_CXX_EXTENSIONS=OFF \
+                    -D CMAKE_CXX_VISIBILITY_PRESET=hidden -D CMAKE_VISIBILITY_INLINES_HIDDEN=ON \
+                    -D CMAKE_OSX_ARCHITECTURES=arm64 \
+                    -D CMAKE_BUILD_TYPE=Release
                     -D${{ matrix.qbt_gui }}
-                    cmake --build build -j$(sysctl -n hw.ncpu)
+                cmake --build build-qbittorrent -j$(sysctl -n hw.ncpu)
 
             - name: Prepare build artifacts
               run: |
