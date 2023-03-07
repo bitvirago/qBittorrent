@@ -86,7 +86,7 @@ jobs:
                     -D CMAKE_BUILD_TYPE=Release \
                     -DQT6=ON \
                     -DGUI=OFF
-                  cmake --build build-qbittorrent -j$(sysctl -n hw.ncpu)
+                  cmake --build build -j$(sysctl -n hw.ncpu)
 
             - name: Prepare build artifacts
               run: |
