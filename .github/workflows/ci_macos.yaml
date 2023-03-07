@@ -87,13 +87,8 @@ jobs:
                     -DGUI=OFF
                   cmake --build build -j$(sysctl -n hw.ncpu)
 
-            - name: Prepare build artifacts
-              run: |
-                  mkdir upload
-                  cp build/qbittorrent-nox upload/qbittorrent-nox
-
             - name: Upload build artifacts
               uses: actions/upload-artifact@v3
               with:
                   name: build-info_macOS_GUI=OFF_libtorrent_Qt-6.4.0
-                  path: upload
+                  path: build
