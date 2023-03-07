@@ -19,7 +19,7 @@ jobs:
             matrix:
                 libt_version: ["2.0.8", "1.2.18"]
                 qbt_gui: ["GUI=OFF"]
-                qt_version: ["5.15.2", "6.4.0"]
+                qt_version: ["6.4.0"]
                 exclude:
                     - libt_version: "1.2.18"
                       qt_version: "6.4.0"
@@ -82,8 +82,8 @@ jobs:
                     -DOPENSSL_ROOT_DIR="${{ env.openssl_root }}"
                   cmake --build build
                   sudo cmake --install build
+
             - name: Build qBittorrent (Qt6)
-              if: ${{ startsWith(matrix.qt_version, 6) }}
               run: |
                   cmake \
                     -B build \
