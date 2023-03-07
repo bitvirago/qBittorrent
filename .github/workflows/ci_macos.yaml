@@ -82,7 +82,6 @@ jobs:
                     -DOPENSSL_ROOT_DIR="${{ env.openssl_root }}" \
                     -D CMAKE_CXX_STANDARD=17 -D CMAKE_CXX_EXTENSIONS=OFF \
                     -D CMAKE_CXX_VISIBILITY_PRESET=hidden -D CMAKE_VISIBILITY_INLINES_HIDDEN=ON \
-                    -D CMAKE_OSX_ARCHITECTURES=arm64 \
                     -D CMAKE_BUILD_TYPE=Release \
                     -DQT6=ON \
                     -DGUI=OFF
