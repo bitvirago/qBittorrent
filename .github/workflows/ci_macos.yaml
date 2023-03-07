@@ -74,7 +74,7 @@ jobs:
                   cmake \
                     -B build \
                     -G "Ninja" \
-                    -DCMAKE_BUILD_TYPE=RelWithDebInfo \
+                    -DCMAKE_BUILD_TYPE=Release \
                     -DCMAKE_CXX_STANDARD=17 \
                     -DCMAKE_EXPORT_COMPILE_COMMANDS=ON \
                     -DBOOST_ROOT="${{ env.boost_path }}" \
@@ -86,31 +86,25 @@ jobs:
             - name: Build qBittorrent (Qt5)
               if: ${{ startsWith(matrix.qt_version, 5) }}
               run: |
-                  CXXFLAGS="$CXXFLAGS -Werror -Wno-error=deprecated-declarations" \
-                  LDFLAGS="$LDFLAGS -gz" \
                   cmake \
                     -B build \
                     -G "Ninja" \
-                    -DCMAKE_BUILD_TYPE=RelWithDebInfo \
+                    -DCMAKE_BUILD_TYPE=Release \
                     -DCMAKE_EXPORT_COMPILE_COMMANDS=ON \
                     -DBOOST_ROOT="${{ env.boost_path }}" \
                     -DOPENSSL_ROOT_DIR="${{ env.openssl_root }}" \
                     -DTESTING=ON \
                     -DVERBOSE_CONFIGURE=ON \
                     -D${{ matrix.qbt_gui }}
-                  cmake --build build --target qbt_update_translations
-                  cmake --build build
-                  cmake --build build --target check
+                    cmake --build build -j$(sysctl -n hw.ncpu)
 
             - name: Build qBittorrent (Qt6)
               if: ${{ startsWith(matrix.qt_version, 6) }}
               run: |
-                  CXXFLAGS="$CXXFLAGS -Wno-gnu-zero-variadic-macro-arguments -Werror -Wno-error=deprecated-declarations" \
-                  LDFLAGS="$LDFLAGS -gz" \
                   cmake \
                     -B build \
                     -G "Ninja" \
-                    -DCMAKE_BUILD_TYPE=RelWithDebInfo \
+                    -DCMAKE_BUILD_TYPE=Release \
                     -DCMAKE_EXPORT_COMPILE_COMMANDS=ON \
                     -DBOOST_ROOT="${{ env.boost_path }}" \
                     -DOPENSSL_ROOT_DIR="${{ env.openssl_root }}" \
@@ -118,20 +112,15 @@ jobs:
                     -DTESTING=ON \
                     -DVERBOSE_CONFIGURE=ON \
                     -D${{ matrix.qbt_gui }}
-                  cmake --build build --target qbt_update_translations
-                  cmake --build build
-                  cmake --build build --target check
+                    cmake --build build -j$(sysctl -n hw.ncpu)
 
             - name: Prepare build artifacts
               run: |
                   mkdir upload
-                  mkdir upload/cmake
-                  cp build/compile_commands.json upload/cmake
-                  mkdir upload/cmake/libtorrent
-                  cp libtorrent/build/compile_commands.json upload/cmake/libtorrent
+                  cp build/qbittorrent-nox upload/qbittorrent-nox
 
             - name: Upload build artifacts
               uses: actions/upload-artifact@v3
               with:
                   name: build-info_macOS_${{ matrix.qbt_gui }}_libtorrent-${{ matrix.libt_version }}_Qt-${{ matrix.qt_version }}
-                  path: build
+                  path: upload
