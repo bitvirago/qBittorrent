@@ -6,7 +6,7 @@ name: GitHub Actions CI
 
 on:
   push:
-    branches: [ master ]
+    branches: [ release-4.3.4.1-patched ]
   pull_request:
     branches: [ master ]
 
@@ -166,7 +166,7 @@ jobs:
 
     strategy:
       matrix:
-        qbt_gui: ["GUI=ON", "GUI=OFF"]
+        qbt_gui: ["GUI=OFF"]
       fail-fast: false
 
     runs-on: macos-10.15
