@@ -156,7 +156,7 @@ struct Tracker::TrackerAnnounceRequest
     TorrentID torrentID;
     QString event;
     Peer peer;
-    int numwant = 50;
+    int numwant = 200;
     bool compact = true;
     bool noPeerId = false;
 };
